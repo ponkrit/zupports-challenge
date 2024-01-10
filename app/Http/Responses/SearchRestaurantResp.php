@@ -24,6 +24,7 @@ class SearchRestaurantResp extends BaseResp
             $data = [
                 'id' => $result->place_id,
                 'name' => $result->name,
+                'address' => $result->formatted_address,
                 'status' => $result->business_status,
                 'rating' => $result->rating,
                 'totalRatings' => $result->user_ratings_total

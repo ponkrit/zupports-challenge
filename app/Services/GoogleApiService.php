@@ -9,6 +9,13 @@ use App\Exceptions\Request\InvalidParameterException;
 
 class GoogleApiService
 {
+    protected $jsonMapper;
+
+    public function __construct(\JsonMapper $jsonMapper)
+    {
+        $this->jsonMapper = $jsonMapper;
+    }
+
     /**
      * @param String $placeName
      * @return SearchPlaceBean[]
@@ -20,7 +27,7 @@ class GoogleApiService
         $headers = [
             'Content-type: application/json'
         ];
-        $url = sprintf('%s/maps/api/place/textsearch/json?query=%s&type=restaurant&key=%s', config('constants.GOOGLE_API_BASE_URL'), $placeName, config('constants.GOOGLE_API_KEY'));
+        $url = sprintf('%s/maps/api/place/textsearch/json?query=%s&type=restaurant&key=%s', config('constants.GOOGLE_API_BASE_URL'), urlencode($placeName), config('constants.GOOGLE_API_KEY'));
 
         $curl = curl_init($url);
         curl_setopt($curl, CURLOPT_HEADER, false);
@@ -47,7 +54,7 @@ class GoogleApiService
             throw new InvalidParameterException();
         }
 
-        foreach ($response->data->results as $result) {
+        foreach ($response->results as $result) {
             $objList[] = $this->jsonMapper->map($result, new SearchPlaceBean());
         }
 
