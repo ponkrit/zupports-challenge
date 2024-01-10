@@ -6,6 +6,7 @@ namespace App\Services;
 
 use App\Beans\SearchPlaceBean;
 use App\Exceptions\Request\InvalidParameterException;
+use Illuminate\Support\Facades\Cache;
 
 class GoogleApiService
 {
@@ -23,6 +24,13 @@ class GoogleApiService
      */
     public function searchRestaurantByPlaceName($placeName)
     {
+        $cacheSearchKey = urlencode(strtolower($placeName));
+        $cacheKey = sprintf('search-%s', $cacheSearchKey);
+
+        if (Cache::has($cacheKey)) {
+            return Cache::get($cacheKey);
+        }
+
         $objList = [];
         $headers = [
             'Content-type: application/json'
@@ -47,6 +55,8 @@ class GoogleApiService
         $response = json_decode($resp);
 
         if ($response->status === config('constants.GOOGLE_API_STATUS_ZERO_RESULTS')) {
+            $this->_saveCache($cacheKey, $objList);
+
             return $objList;
         }
 
@@ -58,6 +68,13 @@ class GoogleApiService
             $objList[] = $this->jsonMapper->map($result, new SearchPlaceBean());
         }
 
+        $this->_saveCache($cacheKey, $objList);
+
         return $objList;
+    }
+
+    private function _saveCache($cacheKey, $result)
+    {
+        Cache::put($cacheKey, $result);
     }
 }
